@@ -335,6 +335,7 @@ describe('Bamboo', () => {
                     jiraIssues:  {
                         issue: [
                             {key: 'AAA'},
+                            {key: 'AAA'},
                             {key: 'BBB'}
                         ]
                     }
@@ -356,6 +357,7 @@ describe('Bamboo', () => {
                     buildReason: 'Child of <a>plan2-99</a>',
                     jiraIssues:  {
                         issue: [
+                            {key: 'AAA'},
                             {key: 'AAA'},
                             {key: 'BBB'}
                         ]
@@ -405,6 +407,7 @@ describe('Bamboo', () => {
                     changes: {
                         change: [
                             {fullName: 'a b'},
+                            {fullName: 'a b'},
                             {fullName: 'c d'}
                         ]
                     }
@@ -426,6 +429,7 @@ describe('Bamboo', () => {
                     buildReason: 'Child of <a>plan2-99</a>',
                     changes:     {
                         change: [
+                            {fullName: 'a b'},
                             {fullName: 'a b'},
                             {fullName: 'c d'}
                         ]
@@ -450,6 +454,7 @@ describe('Bamboo', () => {
                     buildReason: 'Changes by <a>XX</a>',
                     changes:     {
                         change: [
+                            {fullName: 'i j'},
                             {fullName: 'i j'},
                             {fullName: 'k l'}
                         ]
