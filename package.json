@@ -10,7 +10,11 @@
         "mocha": "2.2.5",
         "nock": "2.10.0",
         "expect.js": "^0.3.1",
-        "babel": "5.8.21"
+        "babel": "5.8.21",
+        "gulp": "*",
+        "gulp-babel": "*",
+        "gulp-sourcemaps": "*",
+        "source-map-support": "*"
     },
     "scripts": {
         "test": "mocha"
