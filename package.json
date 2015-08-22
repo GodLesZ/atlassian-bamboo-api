@@ -1,0 +1,30 @@
+{
+    "name": "atlassian-bamboo-api",
+    "version": "0.0.1",
+    "description": "An API over Atlassian's Bamboo build tool",
+    "main": "./lib/bamboo.js",
+    "dependencies": {
+        "commander": "~2.8.1",
+        "request": "~2.61.0",
+        "underscore": "~1.8.3"
+    },
+    "devDependencies": {
+        "mocha": "2.2.5",
+        "nock": "2.10.0",
+        "expect.js": "^0.3.1",
+        "babel": "5.8.21"
+    },
+    "scripts": {
+        "test": "mocha"
+    },
+    "keywords": [
+        "atlassian",
+        "bamboo",
+        "api"
+    ],
+    "engine": {
+        "node": "~0.7"
+    },
+    "author": "GodLesZ <godlesz@hotmail.de>",
+    "license": "MIT"
+}
