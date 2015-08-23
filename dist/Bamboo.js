@@ -27,6 +27,13 @@ var _stream2 = _interopRequireDefault(_stream);
 var Bamboo = (function () {
 
     /**
+     * Callback for testLogin
+     *
+     * @typedef {Function} testLoginCallback
+     * @param {Error|null} error - will return null if no error happen
+     * @param {bool} result - true if no error
+     */
+    /**
      * Callback for getLatestSuccessfulBuildNumber
      *
      * @typedef {Function} getLatestSuccessfulBuildNumberCallback
@@ -106,14 +113,45 @@ var Bamboo = (function () {
     }
 
     /**
-     * Returns the latest successful build number
+     * Requests a lightweight API resource to ensure its available
      *
-     * @param {String} planKey - Bamboo plan key, like 'PROJECT_KEY-PLAN_KEY'
-     * @param {String|Boolean} params - Query string. E.g. '?start-index=25'. Could be false
-     * @param {getLatestSuccessfulBuildNumberCallback} callback
+     * @param {testLoginCallback} callback
      */
 
     _createClass(Bamboo, [{
+        key: 'testLogin',
+        value: function testLogin(callback) {
+            var serverVersionUri = this.host + '/rest/api/latest/info.json';
+
+            (0, _request2['default'])({ uri: serverVersionUri }, function (error, response, body) {
+                var errors = Bamboo.checkErrors(error, response);
+                if (errors) {
+                    callback(errors, false);
+                    return;
+                }
+
+                try {
+
+                    var bodyJson = JSON.parse(body);
+                    if (!bodyJson || !bodyJson.version) {
+                        callback(new Error('Unexpected response: ' + body), false);
+                    }
+                } catch (err) {
+                    callback(err, false);
+                }
+
+                callback(null, true);
+            });
+        }
+
+        /**
+         * Returns the latest successful build number
+         *
+         * @param {String} planKey - Bamboo plan key, like 'PROJECT_KEY-PLAN_KEY'
+         * @param {String|Boolean} params - Query string. E.g. '?start-index=25'. Could be false
+         * @param {getLatestSuccessfulBuildNumberCallback} callback
+         */
+    }, {
         key: 'getLatestSuccessfulBuildNumber',
         value: function getLatestSuccessfulBuildNumber(planKey, params, callback) {
             var self = this,
