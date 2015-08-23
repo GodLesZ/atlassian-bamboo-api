@@ -81,7 +81,14 @@ var Bamboo = (function () {
      *
      * @typedef {Function} getAllPlansCallback
      * @param {Error|null} error - will return null if no error happen
-     * @param {String|null} result - if no error will return build number
+     * @param {Array|null} result - if no error will return list of plans
+     */
+    /**
+     * Callback for getAllBuilds
+     *
+     * @typedef {Function} getAllBuildsCallback
+     * @param {Error|null} error - will return null if no error happen
+     * @param {String|null} result - if no error will return list of builds
      */
 
     /**
@@ -131,7 +138,6 @@ var Bamboo = (function () {
                 }
 
                 try {
-
                     var bodyJson = JSON.parse(body);
                     if (!bodyJson || !bodyJson.version) {
                         callback(new Error('Unexpected response: ' + body), false);
@@ -504,6 +510,82 @@ var Bamboo = (function () {
                 }
 
                 callback(null, currentPlans);
+            });
+        }
+
+        /**
+         * Returns the list of the last builds with full details
+         *
+         * @param {String|Boolean} params - Appending query string. E.g. '&start-index=25'. Could be false
+         * @param {getAllBuildsCallback} callback
+         * @param {Array=} currentBuilds - List of build already fetched
+         */
+    }, {
+        key: 'getAllBuilds',
+        value: function getAllBuilds(params, callback, currentBuilds) {
+            var self = this,
+                planUri = self.host + '/rest/api/latest/result.json?expand=results.result' + (params || '');
+
+            currentBuilds = currentBuilds || [];
+
+            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+                var errors = Bamboo.checkErrors(error, response);
+                if (errors) {
+                    callback(errors, null);
+                    return;
+                }
+
+                var bodyJson = JSON.parse(body),
+                    builds = bodyJson.results;
+
+                if (builds.result.length === 0) {
+                    callback(new Error('No builds available'), null);
+                    return;
+                }
+
+                var _iteratorNormalCompletion5 = true;
+                var _didIteratorError5 = false;
+                var _iteratorError5 = undefined;
+
+                try {
+                    for (var _iterator5 = builds.result[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                        var build = _step5.value;
+
+                        currentBuilds.push(build);
+                    }
+
+                    // Loop through the next series of builds
+                } catch (err) {
+                    _didIteratorError5 = true;
+                    _iteratorError5 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion5 && _iterator5['return']) {
+                            _iterator5['return']();
+                        }
+                    } finally {
+                        if (_didIteratorError5) {
+                            throw _iteratorError5;
+                        }
+                    }
+                }
+
+                var newIndex = builds['max-result'] + builds['start-index'];
+                if (newIndex < builds.size) {
+                    self.getAllBuilds('&start-index=' + newIndex, function (error, result) {
+                        var errors = Bamboo.checkErrors(error, response);
+
+                        if (errors) {
+                            callback(errors, null);
+                            return;
+                        }
+
+                        callback(null, result);
+                    }, currentBuilds);
+                    return;
+                }
+
+                callback(null, currentBuilds);
             });
         }
 
