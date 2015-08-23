@@ -7,6 +7,7 @@ import requestMock from 'nock';
 let baseTestUrl       = 'http://example.com',
     testPlanKey       = 'myPrj-myPlan',
     testApiUrl        = '/rest/api/latest/result',
+    testApiLoginUrl   = '/rest/api/latest/info.json',
     testPlanResultUrl = testApiUrl + '/' + testPlanKey + '.json',
     testPlanLatest    = '/rest/api/latest/plan.json';
 
@@ -470,44 +471,36 @@ describe('Bamboo', () => {
         });
     });
 
-    describe('base http authentication, test on bamboo.getLatestSuccessfulBuildNumber method', () => {
+    describe('testLogin', () => {
 
         let username    = 'testuser',
             password    = 'testpassword',
             authString  = username + ':' + password,
             encrypted   = (new Buffer(authString)).toString('base64'),
-            planKey     = 'myPrjAuth-myPlanAuth',
-            result      = JSON.stringify({
-                results: {
-                    result: [
-                        {number: '22', state: 'Successful'},
-                        {number: '23', state: 'Failed'}
-                    ]
-                }
-            }),
+            result      = JSON.stringify({version:"2.4",edition:"",buildDate:"2009-09-11T20:47:44.000+0200",buildNumber:"1503"}),
             headerMatch = (val) => { return val === 'Basic ' + encrypted; };
 
         requestMock(baseTestUrl)
-            .get(testApiUrl + '/' + planKey + '.json')
+            .get(testApiLoginUrl)
             .matchHeader('Authorization', headerMatch)
             .reply(200, result);
 
         it('should fail, since require authentication', (done) => {
             let bamboo = new Bamboo(baseTestUrl);
 
-            bamboo.getLatestSuccessfulBuildNumber(planKey, false, (error, result) => {
-                expect(result).to.be(null);
+            bamboo.testLogin((error, result) => {
+                expect(result).to.be(false);
                 done();
             });
         });
 
 
-        it('returns the latest successful build number', (done) => {
+        it('returns true', (done) => {
             let bamboo = new Bamboo(baseTestUrl, username, password);
 
-            bamboo.getLatestSuccessfulBuildNumber(planKey, false, (error, result) => {
+            bamboo.testLogin((error, result) => {
                 expect(error).to.be(null);
-                expect(result).to.be('22');
+                expect(result).to.be(true);
                 done();
             });
         });
