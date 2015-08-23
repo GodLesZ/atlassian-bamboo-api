@@ -5,11 +5,19 @@ import expect from 'expect.js';
 import requestMock from 'nock';
 
 let baseTestUrl       = 'http://example.com',
+    testUsername      = 'user',
+    testPassword      = 'pass',
+    authTestUrl       = `http://${testUsername}:${testPassword}@example.com`,
     testPlanKey       = 'myPrj-myPlan',
     testApiUrl        = '/rest/api/latest/result',
     testApiLoginUrl   = '/rest/api/latest/info.json',
     testPlanResultUrl = testApiUrl + '/' + testPlanKey + '.json',
-    testPlanLatest    = '/rest/api/latest/plan.json';
+    testPlanLatest    = '/rest/api/latest/plan.json',
+    testBuildsLatest  = '/rest/api/latest/result.json?expand=results.result';
+
+before(() => {
+    requestMock.cleanAll();
+});
 
 describe('Bamboo', () => {
 
@@ -227,79 +235,99 @@ describe('Bamboo', () => {
 
     describe('getAllPlans', () => {
 
+        let addRequestMock = (numStart, numResults, data = [], size = 0) => {
+            requestMock(baseTestUrl)
+                .get(testPlanLatest + (numStart > 0 ? '?start-index=' + numStart : ''))
+                .reply(200, JSON.stringify({
+                    plans: {
+                        size:          size,
+                        'max-result':  numResults,
+                        'start-index': numStart,
+                        plan:          data
+                    }
+                }));
+        };
+
         it('returns a list of all plans available', (done) => {
 
-            requestMock(baseTestUrl)
-                .get(testPlanLatest)
-                .reply(200, JSON.stringify({
-                    plans: {
-                        size:          3,
-                        'max-result':  2,
-                        'start-index': 0,
-                        plan:          [
-                            {key: 'AA-BB', name: 'Full name1'},
-                            {key: 'CC-DD', name: 'Full name2'}
-                        ]
-                    }
-                }));
+            let allPlans = [
+                {key: 'AA-BB', name: 'Full name1'},
+                {key: 'CC-DD', name: 'Full name2'},
+                {key: 'EE-FF', name: 'Full name3'},
+                {key: 'GG-HH', name: 'Full name4'},
+                {key: 'II-LL', name: 'Full name5'}
+            ];
 
-            requestMock(baseTestUrl)
-                .get(testPlanLatest + '?start-index=2')
-                .reply(200, JSON.stringify({
-                    plans: {
-                        size:          5,
-                        'max-result':  2,
-                        'start-index': 2,
-                        plan:          [
-                            {key: 'EE-FF', name: 'Full name3'},
-                            {key: 'GG-HH', name: 'Full name4'}
-                        ]
-                    }
-                }));
-
-            requestMock(baseTestUrl)
-                .get(testPlanLatest + '?start-index=4')
-                .reply(200, JSON.stringify({
-                    plans: {
-                        size:          5,
-                        'max-result':  1,
-                        'start-index': 4,
-                        plan:          [
-                            {key: 'II-LL', name: 'Full name5'}
-                        ]
-                    }
-                }));
+            addRequestMock(0, 2, allPlans.slice(0, 2), allPlans.length);
+            addRequestMock(2, 2, allPlans.slice(2, 4), allPlans.length);
+            addRequestMock(4, 1, allPlans.slice(4, 5), allPlans.length);
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getAllPlans('', (error, result) => {
+            bamboo.getAllPlans(null, (error, result) => {
                 expect(error).to.be(null);
-                expect(result).to.eql([
-                    {key: 'AA-BB', name: 'Full name1'},
-                    {key: 'CC-DD', name: 'Full name2'},
-                    {key: 'EE-FF', name: 'Full name3'},
-                    {key: 'GG-HH', name: 'Full name4'},
-                    {key: 'II-LL', name: 'Full name5'}
-                ]);
+                expect(result).to.eql(allPlans);
                 done();
             });
         });
 
         it('returns a string saying that there are no plans', (done) => {
 
-            requestMock(baseTestUrl)
-                .get(testPlanLatest)
-                .reply(200, JSON.stringify({
-                    plans: {
-                        size:          3,
-                        'max-result':  1,
-                        'start-index': 0,
-                        plan:          []
-                    }
-                }));
+            addRequestMock(0, 1);
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getAllPlans('', (error, result) => {
+            bamboo.getAllPlans(null, (error, result) => {
                 expect(error.toString()).to.eql('Error: No plans available');
+                expect(result).to.be(null);
+                done();
+            });
+        });
+
+    });
+
+    describe('getAllBuilds', () => {
+
+        let addRequestMock = (numStart, numResults, data = [], size = 0) => {
+            requestMock(baseTestUrl)
+                .get(testBuildsLatest + (numStart > 0 ? '&start-index=' + numStart : ''))
+                .reply(200, JSON.stringify({
+                    results: {
+                        size:          size,
+                        'max-result':  numResults,
+                        'start-index': numStart,
+                        result:        data
+                    }
+                }));
+        };
+
+        it('returns a list of all builds available', (done) => {
+
+            let allBuilds = [
+                {key: 'AA-BB', name: 'Full name1'},
+                {key: 'CC-DD', name: 'Full name2'},
+                {key: 'EE-FF', name: 'Full name3'},
+                {key: 'GG-HH', name: 'Full name4'},
+                {key: 'II-LL', name: 'Full name5'}
+            ];
+
+            addRequestMock(0, 2, allBuilds.slice(0, 2), allBuilds.length);
+            addRequestMock(2, 2, allBuilds.slice(2, 4), allBuilds.length);
+            addRequestMock(4, 1, allBuilds.slice(4, 5), allBuilds.length);
+
+            let bamboo = new Bamboo(baseTestUrl);
+            bamboo.getAllBuilds(null, (error, result) => {
+                expect(error).to.be(null);
+                expect(result).to.eql(allBuilds);
+                done();
+            });
+        });
+
+        it('returns a string saying that there are no builds', (done) => {
+
+            addRequestMock(0, 1);
+
+            let bamboo = new Bamboo(baseTestUrl);
+            bamboo.getAllBuilds(null, (error, result) => {
+                expect(error.toString()).to.eql('Error: No builds available');
                 expect(result).to.be(null);
                 done();
             });
@@ -473,31 +501,39 @@ describe('Bamboo', () => {
 
     describe('testLogin', () => {
 
-        let username    = 'testuser',
-            password    = 'testpassword',
-            authString  = username + ':' + password,
-            encrypted   = (new Buffer(authString)).toString('base64'),
-            result      = JSON.stringify({version:"2.4",edition:"",buildDate:"2009-09-11T20:47:44.000+0200",buildNumber:"1503"}),
-            headerMatch = (val) => { return val === 'Basic ' + encrypted; };
+        let addRequestMock = () => {
+            let authString  = testUsername + ':' + testPassword,
+                encrypted   = (new Buffer(authString)).toString('base64'),
+                result      = JSON.stringify({
+                    version:     '2.4',
+                    edition:     '',
+                    buildDate:   '2009-09-11T20:47:44.000+0200',
+                    buildNumber: '1503'
+                }),
+                headerMatch = (val) => { return val === 'Basic ' + encrypted; };
 
-        requestMock(baseTestUrl)
-            .get(testApiLoginUrl)
-            .matchHeader('Authorization', headerMatch)
-            .reply(200, result);
+            requestMock(baseTestUrl)
+                .get(testApiLoginUrl)
+                .matchHeader('Authorization', headerMatch)
+                .reply(200, result);
+        };
 
         it('should fail, since require authentication', (done) => {
-            let bamboo = new Bamboo(baseTestUrl);
 
+            addRequestMock();
+
+            let bamboo = new Bamboo(baseTestUrl);
             bamboo.testLogin((error, result) => {
                 expect(result).to.be(false);
                 done();
             });
         });
 
-
         it('returns true', (done) => {
-            let bamboo = new Bamboo(baseTestUrl, username, password);
 
+            addRequestMock();
+
+            let bamboo = new Bamboo(baseTestUrl, testUsername, testPassword);
             bamboo.testLogin((error, result) => {
                 expect(error).to.be(null);
                 expect(result).to.be(true);
