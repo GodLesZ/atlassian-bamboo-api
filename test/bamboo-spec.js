@@ -13,7 +13,7 @@ let baseTestUrl       = 'http://example.com',
     testApiLoginUrl   = '/rest/api/latest/info.json',
     testPlanResultUrl = testApiUrl + '/' + testPlanKey + '.json',
     testPlanLatest    = '/rest/api/latest/plan.json',
-    testBuildsLatest  = '/rest/api/latest/result.json?expand=results.result';
+    testBuildsLatest  = '/rest/api/latest/result.json';
 
 before(() => {
     requestMock.cleanAll();
@@ -36,7 +36,7 @@ describe('Bamboo', () => {
                 }));
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '?1', (error, result) => {
+            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '1', (error, result) => {
                 expect(error).to.be(null);
                 expect(result).to.eql('22');
                 done();
@@ -56,7 +56,7 @@ describe('Bamboo', () => {
                 }));
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '?2', (error, result) => {
+            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '2', (error, result) => {
                 expect(error.toString()).to.eql('Error: The plan doesn\'t contain any successful build');
                 expect(result).to.be(null);
                 done();
@@ -79,7 +79,7 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?start-index=2')
+                .get(testPlanResultUrl + '?3&start-index=2')
                 .reply(200, JSON.stringify({
                     results: {
                         size:          3,
@@ -92,7 +92,7 @@ describe('Bamboo', () => {
                 }));
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '?3', (error, result) => {
+            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '3', (error, result) => {
                 expect(error.toString()).to.eql('Error: The plan doesn\'t contain any successful build');
                 expect(result).to.be(null);
                 done();
@@ -109,7 +109,7 @@ describe('Bamboo', () => {
                 }));
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '?4', (error, result) => {
+            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '4', (error, result) => {
                 expect(error.toString()).to.eql('Error: The plan doesn\'t contain any result');
                 expect(result).to.be(null);
                 done();
@@ -123,7 +123,7 @@ describe('Bamboo', () => {
                 .reply(404);
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '?5', (error, result) => {
+            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '5', (error, result) => {
                 expect(error.toString()).to.eql('Error: Unreachable endpoint');
                 expect(result).to.be(null);
                 done();
@@ -146,7 +146,7 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?start-index=2')
+                .get(testPlanResultUrl + '?6&start-index=2')
                 .reply(200, JSON.stringify({
                     results: {
                         size:          3,
@@ -159,7 +159,7 @@ describe('Bamboo', () => {
                 }));
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '?6', (error, result) => {
+            bamboo.getLatestSuccessfulBuildNumber(testPlanKey, '6', (error, result) => {
                 expect(error).to.be(null);
                 expect(result).to.eql('21');
                 done();
@@ -235,9 +235,9 @@ describe('Bamboo', () => {
 
     describe('getAllPlans', () => {
 
-        let addRequestMock = (numStart, numResults, data = [], size = 0) => {
+        let addRequestMock = (numStart, numResults, data = [], size = 0, params = '') => {
             requestMock(baseTestUrl)
-                .get(testPlanLatest + (numStart > 0 ? '?start-index=' + numStart : ''))
+                .get(testPlanLatest + '?' + params + (numStart > 0 ? '&start-index=' + numStart : ''))
                 .reply(200, JSON.stringify({
                     plans: {
                         size:          size,
@@ -282,13 +282,35 @@ describe('Bamboo', () => {
             });
         });
 
+        it('works over pages with params', (done) => {
+
+            let allPlans = [
+                {key: 'AA-BB', name: 'Full name1'},
+                {key: 'CC-DD', name: 'Full name2'},
+                {key: 'EE-FF', name: 'Full name3'},
+                {key: 'GG-HH', name: 'Full name4'},
+                {key: 'II-LL', name: 'Full name5'}
+            ];
+
+            addRequestMock(0, 2, allPlans.slice(0, 2), allPlans.length, 'expand=unit.test');
+            addRequestMock(2, 2, allPlans.slice(2, 4), allPlans.length, 'expand=unit.test');
+            addRequestMock(4, 1, allPlans.slice(4, 5), allPlans.length, 'expand=unit.test');
+
+            let bamboo = new Bamboo(baseTestUrl);
+            bamboo.getAllPlans('expand=unit.test', (error, result) => {
+                expect(error).to.be(null);
+                expect(result).to.eql(allPlans);
+                done();
+            });
+        });
+
     });
 
     describe('getAllBuilds', () => {
 
-        let addRequestMock = (numStart, numResults, data = [], size = 0) => {
+        let addRequestMock = (numStart, numResults, data = [], size = 0, params = '') => {
             requestMock(baseTestUrl)
-                .get(testBuildsLatest + (numStart > 0 ? '&start-index=' + numStart : ''))
+                .get(testBuildsLatest + '?' + params + (numStart > 0 ? '&start-index=' + numStart : ''))
                 .reply(200, JSON.stringify({
                     results: {
                         size:          size,
@@ -329,6 +351,28 @@ describe('Bamboo', () => {
             bamboo.getAllBuilds(null, (error, result) => {
                 expect(error.toString()).to.eql('Error: No builds available');
                 expect(result).to.be(null);
+                done();
+            });
+        });
+
+        it('works over pages with params', (done) => {
+
+            let allBuilds = [
+                {key: 'AA-BB', name: 'Full name1'},
+                {key: 'CC-DD', name: 'Full name2'},
+                {key: 'EE-FF', name: 'Full name3'},
+                {key: 'GG-HH', name: 'Full name4'},
+                {key: 'II-LL', name: 'Full name5'}
+            ];
+
+            addRequestMock(0, 2, allBuilds.slice(0, 2), allBuilds.length, 'expand=unit.test');
+            addRequestMock(2, 2, allBuilds.slice(2, 4), allBuilds.length, 'expand=unit.test');
+            addRequestMock(4, 1, allBuilds.slice(4, 5), allBuilds.length, 'expand=unit.test');
+
+            let bamboo = new Bamboo(baseTestUrl);
+            bamboo.getAllBuilds('expand=unit.test', (error, result) => {
+                expect(error).to.be(null);
+                expect(result).to.eql(allBuilds);
                 done();
             });
         });
