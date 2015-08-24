@@ -167,19 +167,23 @@ describe('Bamboo', () => {
         })
     });
 
-    describe('getBuildStatus', () => {
+    describe('getBuild', () => {
 
-        it('returns the build Status', (done) => {
+        it('returns the build', (done) => {
+            let responseBuild = {
+                state: "Successful",
+                buildState: "Successful",
+                number: 1337,
+                buildNumber: 1337
+            };
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/' + testPlanKey + '/416.json')
-                .reply(200, JSON.stringify({
-                    lifeCycleState: 'InProgress'
-                }));
+                .get(testApiUrl + '/' + testPlanKey + '-416.json?')
+                .reply(200, JSON.stringify(responseBuild));
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.getBuildStatus(testPlanKey + '/416', (error, result) => {
+            bamboo.getBuild(testPlanKey + '-416', '', (error, result) => {
                 expect(error).to.be(null);
-                expect(result).to.eql('InProgress');
+                expect(result).to.eql(responseBuild);
                 done();
             });
         });

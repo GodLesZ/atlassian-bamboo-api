@@ -49,11 +49,11 @@ var Bamboo = (function () {
      * @param {String|null} number - last result number if no error will return build number
      */
     /**
-     * Callback for getBuildStatus
+     * Callback for getBuild
      *
-     * @typedef {Function} getBuildStatusCallback
+     * @typedef {Function} getBuildCallback
      * @param {Error|null} error - will return null if no error happen
-     * @param {String|null} lifeCycleState - build life cycle, like 'InProgress'
+     * @param {Object|null} build - Build details
      */
     /**
      * Callback for getChangesFromBuild
@@ -250,15 +250,17 @@ var Bamboo = (function () {
         }
 
         /**
-         * Returns the status of the build
+         * Returns the build
          *
-         * @param {String} buildDetails - Bamboo plan key + build number, like 'PROJECT_KEY-PLAN_KEY/BUILD_NUMBER'
+         * @param {String} buildKey - Bamboo plan key + build number, like 'PROJECT_KEY-PLAN_KEY-BUILD_NUMBER'
+         * @param {String|Boolean} params - Appending query string. E.g. 'expand=something'. Could be false
          * @param {getBuildStatusCallback} callback
          */
     }, {
-        key: 'getBuildStatus',
-        value: function getBuildStatus(buildDetails, callback) {
-            var planUri = this.host + '/rest/api/latest/result/' + buildDetails + '.json';
+        key: 'getBuild',
+        value: function getBuild(buildKey, params, callback) {
+            params = params || '';
+            var planUri = this.host + '/rest/api/latest/result/' + buildKey + '.json?' + params;
 
             (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
@@ -269,7 +271,7 @@ var Bamboo = (function () {
 
                 var bodyJson = JSON.parse(body);
 
-                callback(null, bodyJson.lifeCycleState);
+                callback(null, bodyJson);
             });
         }
 
