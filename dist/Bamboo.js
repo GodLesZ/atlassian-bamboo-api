@@ -154,14 +154,18 @@ var Bamboo = (function () {
          * Returns the latest successful build number
          *
          * @param {String} planKey - Bamboo plan key, like 'PROJECT_KEY-PLAN_KEY'
-         * @param {String|Boolean} params - Query string. E.g. '?start-index=25'. Could be false
+         * @param {String|Boolean} params - Query string. E.g. 'expand=something'. Could be false
          * @param {getLatestSuccessfulBuildNumberCallback} callback
+         * @param {Number|null} startIndex - If given, request with start-index parameter
          */
     }, {
         key: 'getLatestSuccessfulBuildNumber',
-        value: function getLatestSuccessfulBuildNumber(planKey, params, callback) {
+        value: function getLatestSuccessfulBuildNumber(planKey, params, callback, startIndex) {
+            params = params || '';
+            startIndex = startIndex ? '&start-index=' + startIndex : '';
+
             var self = this,
-                planUri = self.host + '/rest/api/latest/result/' + planKey + '.json' + (params || '');
+                planUri = self.host + '/rest/api/latest/result/' + planKey + '.json?' + params + startIndex;
 
             (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrorsWithResult(error, response);
@@ -209,9 +213,9 @@ var Bamboo = (function () {
 
                 var newIndex = results['max-result'] + results['start-index'];
                 if (newIndex < results.size) {
-                    self.getLatestSuccessfulBuildNumber(planKey, '?start-index=' + newIndex, function (error, result) {
+                    self.getLatestSuccessfulBuildNumber(planKey, params, function (error, result) {
                         callback(error, result);
-                    });
+                    }, newIndex);
                     return;
                 }
 
@@ -437,15 +441,21 @@ var Bamboo = (function () {
         /**
          * Returns the list of plans, key and names available
          *
-         * @param {String|Boolean} params - Query string. E.g. '?start-index=25'. Could be false
+         * @param {String|Boolean} params - Query string. E.g. 'expand=something'. Could be false
          * @param {getAllPlansCallback} callback
          * @param {Array=} currentPlans - List of plans available (each plan has a 'key' and a 'name' value)
+         * @param {Number|null} startIndex - If given, request with start-index parameter
          */
     }, {
         key: 'getAllPlans',
         value: function getAllPlans(params, callback, currentPlans) {
+            var startIndex = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+
+            params = params || '';
+            startIndex = startIndex ? '&start-index=' + startIndex : '';
+
             var self = this,
-                planUri = self.host + '/rest/api/latest/plan.json' + (params || '');
+                planUri = self.host + '/rest/api/latest/plan.json?' + params + startIndex;
 
             currentPlans = currentPlans || [];
 
@@ -478,7 +488,7 @@ var Bamboo = (function () {
                         });
                     }
 
-                    // Loop through the next series of builds
+                    // Loop through the next series of plans
                 } catch (err) {
                     _didIteratorError4 = true;
                     _iteratorError4 = err;
@@ -496,7 +506,7 @@ var Bamboo = (function () {
 
                 var newIndex = plans['max-result'] + plans['start-index'];
                 if (newIndex < plans.size) {
-                    self.getAllPlans('?start-index=' + newIndex, function (error, result) {
+                    self.getAllPlans(params, function (error, result) {
                         var errors = Bamboo.checkErrors(error, response);
 
                         if (errors) {
@@ -505,7 +515,7 @@ var Bamboo = (function () {
                         }
 
                         callback(null, result);
-                    }, currentPlans);
+                    }, currentPlans, newIndex);
                     return;
                 }
 
@@ -516,15 +526,21 @@ var Bamboo = (function () {
         /**
          * Returns the list of the last builds with full details
          *
-         * @param {String|Boolean} params - Appending query string. E.g. '&start-index=25'. Could be false
+         * @param {String|Boolean} params - Appending query string. E.g. 'expand=something'. Could be false
          * @param {getAllBuildsCallback} callback
          * @param {Array=} currentBuilds - List of build already fetched
+         * @param {Number|null} startIndex - If given, request with start-index parameter
          */
     }, {
         key: 'getAllBuilds',
         value: function getAllBuilds(params, callback, currentBuilds) {
+            var startIndex = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+
+            params = params || '';
+            startIndex = startIndex ? '&start-index=' + startIndex : '';
+
             var self = this,
-                planUri = self.host + '/rest/api/latest/result.json?expand=results.result' + (params || '');
+                planUri = self.host + '/rest/api/latest/result.json?' + params + startIndex;
 
             currentBuilds = currentBuilds || [];
 
@@ -536,9 +552,9 @@ var Bamboo = (function () {
                 }
 
                 var bodyJson = JSON.parse(body),
-                    builds = bodyJson.results;
+                    results = bodyJson.results;
 
-                if (builds.result.length === 0) {
+                if (results.result.length === 0) {
                     callback(new Error('No builds available'), null);
                     return;
                 }
@@ -548,10 +564,10 @@ var Bamboo = (function () {
                 var _iteratorError5 = undefined;
 
                 try {
-                    for (var _iterator5 = builds.result[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                        var build = _step5.value;
+                    for (var _iterator5 = results.result[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                        var result = _step5.value;
 
-                        currentBuilds.push(build);
+                        currentBuilds.push(result);
                     }
 
                     // Loop through the next series of builds
@@ -570,9 +586,9 @@ var Bamboo = (function () {
                     }
                 }
 
-                var newIndex = builds['max-result'] + builds['start-index'];
-                if (newIndex < builds.size) {
-                    self.getAllBuilds('&start-index=' + newIndex, function (error, result) {
+                var newIndex = results['max-result'] + results['start-index'];
+                if (newIndex < results.size) {
+                    self.getAllBuilds(params, function (error, result) {
                         var errors = Bamboo.checkErrors(error, response);
 
                         if (errors) {
@@ -581,7 +597,7 @@ var Bamboo = (function () {
                         }
 
                         callback(null, result);
-                    }, currentBuilds);
+                    }, currentBuilds, newIndex);
                     return;
                 }
 
