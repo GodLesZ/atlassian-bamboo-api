@@ -117,20 +117,35 @@ var Bamboo = (function () {
         }
 
         this.host = host;
+        this.defaultRequestOptions = {
+            keepAlive: true,
+            keepAliveMsecs: 5000
+        };
     }
 
-    /**
-     * Requests a lightweight API resource to ensure its available
-     *
-     * @param {testLoginCallback} callback
-     */
-
     _createClass(Bamboo, [{
+        key: 'doApiRequest',
+        value: function doApiRequest(options, callback) {
+            var requestOptions = {},
+                self = this;
+            Object.assign(requestOptions, this.defaultRequestOptions, options);
+
+            (0, _request2['default'])(requestOptions, function (error, response, body) {
+                callback.call(self, error, response, body);
+            });
+        }
+
+        /**
+         * Requests a lightweight API resource to ensure its available
+         *
+         * @param {testLoginCallback} callback
+         */
+    }, {
         key: 'testLogin',
         value: function testLogin(callback) {
             var serverVersionUri = this.host + '/rest/api/latest/info.json';
 
-            (0, _request2['default'])({ uri: serverVersionUri }, function (error, response, body) {
+            this.doApiRequest({ uri: serverVersionUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
                 if (errors) {
                     callback(errors, false);
@@ -160,14 +175,16 @@ var Bamboo = (function () {
          */
     }, {
         key: 'getLatestSuccessfulBuildNumber',
-        value: function getLatestSuccessfulBuildNumber(planKey, params, callback, startIndex) {
+        value: function getLatestSuccessfulBuildNumber(planKey, params, callback) {
+            var startIndex = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+
             params = params || '';
             startIndex = startIndex ? '&start-index=' + startIndex : '';
 
             var self = this,
                 planUri = self.host + '/rest/api/latest/result/' + planKey + '.json?' + params + startIndex;
 
-            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+            this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrorsWithResult(error, response);
                 if (errors) {
                     callback(errors, null);
@@ -234,7 +251,7 @@ var Bamboo = (function () {
         value: function getLatestBuildStatus(planKey, callback) {
             var planUri = this.host + '/rest/api/latest/result/' + planKey + '.json';
 
-            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+            this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrorsWithResult(error, response);
                 if (errors) {
                     callback(errors, null, null);
@@ -254,7 +271,7 @@ var Bamboo = (function () {
          *
          * @param {String} buildKey - Bamboo plan key + build number, like 'PROJECT_KEY-PLAN_KEY-BUILD_NUMBER'
          * @param {String|Boolean} params - Appending query string. E.g. 'expand=something'. Could be false
-         * @param {getBuildStatusCallback} callback
+         * @param {getBuildCallback} callback
          */
     }, {
         key: 'getBuild',
@@ -262,7 +279,7 @@ var Bamboo = (function () {
             params = params || '';
             var planUri = this.host + '/rest/api/latest/result/' + buildKey + '.json?' + params;
 
-            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+            this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
                 if (errors) {
                     callback(errors, null);
@@ -287,7 +304,7 @@ var Bamboo = (function () {
             var self = this,
                 planUri = self.host + '/rest/api/latest/result/' + buildDetails + '.json?expand=changes';
 
-            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+            this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
                 if (errors) {
                     callback(errors, null);
@@ -358,7 +375,7 @@ var Bamboo = (function () {
             var self = this,
                 planUri = self.host + '/rest/api/latest/result/' + buildDetails + '.json?expand=jiraIssues';
 
-            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+            this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
                 if (errors) {
                     callback(errors, null);
@@ -429,7 +446,7 @@ var Bamboo = (function () {
         value: function getArtifactContent(buildDetails, artifactName, callback) {
             var artifactUri = this.host + '/browse/' + buildDetails + '/artifact/shared/' + artifactName + '/' + artifactName;
 
-            (0, _request2['default'])({ uri: artifactUri }, function (error, response, body) {
+            this.doApiRequest({ uri: artifactUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
                 if (errors) {
                     callback(errors, null);
@@ -461,7 +478,7 @@ var Bamboo = (function () {
 
             currentPlans = currentPlans || [];
 
-            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+            this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
                 if (errors) {
                     callback(errors, null);
@@ -546,7 +563,7 @@ var Bamboo = (function () {
 
             currentBuilds = currentBuilds || [];
 
-            (0, _request2['default'])({ uri: planUri }, function (error, response, body) {
+            this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
                 if (errors) {
                     callback(errors, null);
