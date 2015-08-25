@@ -21,6 +21,35 @@ before(() => {
 
 describe('Bamboo', () => {
 
+    describe('requests options matching', () => {
+
+        let addRequestMock = () => {
+            let result      = JSON.stringify({
+                    version:     '2.4',
+                    edition:     '',
+                    buildDate:   '2009-09-11T20:47:44.000+0200',
+                    buildNumber: '1503'
+                });
+
+            requestMock(baseTestUrl)
+                .get(testApiLoginUrl)
+                .reply(200, result);
+        };
+
+        it('should have a keepAlive setting', (done) => {
+
+            addRequestMock();
+
+            let bamboo = new Bamboo(baseTestUrl);
+            bamboo.doApiRequest({url: bamboo.host+'/rest/api/latest/info.json'}, (error, response, body) => {
+                let opts = bamboo.defaultRequestOptions;
+                expect(response.request.keepAlive).to.be(opts.keepAlive);
+                expect(response.request.keepAliveMsecs).to.be(opts.keepAliveMsecs);
+                done();
+            });
+        });
+    });
+
     describe('getLatestSuccessfulBuildNumber', () => {
 
         it('returns the latest successful build number', (done) => {
