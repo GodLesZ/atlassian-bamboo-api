@@ -1,37 +1,33 @@
 "use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _request = require('request');
 
 var _request2 = _interopRequireDefault(_request);
 
-var _stream = require('stream');
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var _stream2 = _interopRequireDefault(_stream);
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 // @TODO: Use Sets instead of arrays
 
 //noinspection JSUnusedGlobalSymbols
 
-var Bamboo = (function () {
+var Bamboo = function () {
 
     /**
      * Callback for testLogin
      *
      * @typedef {Function} testLoginCallback
      * @param {Error|null} error - will return null if no error happen
-     * @param {bool} result - true if no error
+     * @param {Boolean} result - true if no error
      */
     /**
      * Callback for getLatestSuccessfulBuildNumber
@@ -88,7 +84,7 @@ var Bamboo = (function () {
      *
      * @typedef {Function} getAllBuildsCallback
      * @param {Error|null} error - will return null if no error happen
-     * @param {String|null} result - if no error will return list of builds
+     * @param {Array|null} result - if no error will return list of builds
      */
 
     /**
@@ -130,7 +126,7 @@ var Bamboo = (function () {
                 self = this;
             Object.assign(requestOptions, this.defaultRequestOptions, options);
 
-            (0, _request2['default'])(requestOptions, function (error, response, body) {
+            (0, _request2.default)(requestOptions, function (error, response, body) {
                 callback.call(self, error, response, body);
             });
         }
@@ -140,10 +136,11 @@ var Bamboo = (function () {
          *
          * @param {testLoginCallback} callback
          */
+
     }, {
         key: 'testLogin',
         value: function testLogin(callback) {
-            var serverVersionUri = this.host + '/rest/api/latest/info.json';
+            var serverVersionUri = this.host + '/rest/api/latest/plan.json?os_authType=basic';
 
             this.doApiRequest({ uri: serverVersionUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
@@ -154,7 +151,7 @@ var Bamboo = (function () {
 
                 try {
                     var bodyJson = JSON.parse(body);
-                    if (!bodyJson || !bodyJson.version) {
+                    if (!bodyJson || !bodyJson.plans) {
                         callback(new Error('Unexpected response: ' + body), false);
                     }
                 } catch (err) {
@@ -171,18 +168,18 @@ var Bamboo = (function () {
          * @param {String} planKey - Bamboo plan key, like 'PROJECT_KEY-PLAN_KEY'
          * @param {String|Boolean} params - Query string. E.g. 'expand=something'. Could be false
          * @param {getLatestSuccessfulBuildNumberCallback} callback
-         * @param {Number|null} startIndex - If given, request with start-index parameter
+         * @param {Number} [startIndex] - If given, request with start-index parameter
          */
+
     }, {
         key: 'getLatestSuccessfulBuildNumber',
         value: function getLatestSuccessfulBuildNumber(planKey, params, callback) {
             var startIndex = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
 
             params = params || '';
-            startIndex = startIndex ? '&start-index=' + startIndex : '';
-
-            var self = this,
-                planUri = self.host + '/rest/api/latest/result/' + planKey + '.json?' + params + startIndex;
+            var indexParam = startIndex ? '&start-index=' + startIndex : '',
+                self = this,
+                planUri = self.host + '/rest/api/latest/result/' + planKey + '.json?os_authType=basic' + params + indexParam;
 
             this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrorsWithResult(error, response);
@@ -218,8 +215,8 @@ var Bamboo = (function () {
                     _iteratorError = err;
                 } finally {
                     try {
-                        if (!_iteratorNormalCompletion && _iterator['return']) {
-                            _iterator['return']();
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
                         }
                     } finally {
                         if (_didIteratorError) {
@@ -246,10 +243,11 @@ var Bamboo = (function () {
          * @param {String} planKey - Bamboo plan key, like 'PROJECT_KEY-PLAN_KEY'
          * @param {getLatestBuildStatusCallback} callback
          */
+
     }, {
         key: 'getLatestBuildStatus',
         value: function getLatestBuildStatus(planKey, callback) {
-            var planUri = this.host + '/rest/api/latest/result/' + planKey + '.json';
+            var planUri = this.host + '/rest/api/latest/result/' + planKey + '.json?os_authType=basic';
 
             this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrorsWithResult(error, response);
@@ -273,11 +271,12 @@ var Bamboo = (function () {
          * @param {String|Boolean} params - Appending query string. E.g. 'expand=something'. Could be false
          * @param {getBuildCallback} callback
          */
+
     }, {
         key: 'getBuild',
         value: function getBuild(buildKey, params, callback) {
             params = params || '';
-            var planUri = this.host + '/rest/api/latest/result/' + buildKey + '.json?' + params;
+            var planUri = this.host + '/rest/api/latest/result/' + buildKey + '.json?os_authType=basic&' + params;
 
             this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
@@ -298,11 +297,12 @@ var Bamboo = (function () {
          * @param {String} buildDetails - Bamboo plan key + build number, like 'PROJECT_KEY-PLAN_KEY/BUILD_NUMBER'
          * @param {getChangesFromBuildCallback} callback
          */
+
     }, {
         key: 'getChangesFromBuild',
         value: function getChangesFromBuild(buildDetails, callback) {
             var self = this,
-                planUri = self.host + '/rest/api/latest/result/' + buildDetails + '.json?expand=changes';
+                planUri = self.host + '/rest/api/latest/result/' + buildDetails + '.json?os_authType=basic&expand=changes';
 
             this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
@@ -331,8 +331,8 @@ var Bamboo = (function () {
                     _iteratorError2 = err;
                 } finally {
                     try {
-                        if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-                            _iterator2['return']();
+                        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                            _iterator2.return();
                         }
                     } finally {
                         if (_didIteratorError2) {
@@ -369,11 +369,12 @@ var Bamboo = (function () {
          * @param {String} buildDetails - Bamboo plan key + build number, like 'PROJECT_KEY-PLAN_KEY/BUILD_NUMBER'
          * @param {getJiraIssuesFromBuildCallback} callback
          */
+
     }, {
         key: 'getJiraIssuesFromBuild',
         value: function getJiraIssuesFromBuild(buildDetails, callback) {
             var self = this,
-                planUri = self.host + '/rest/api/latest/result/' + buildDetails + '.json?expand=jiraIssues';
+                planUri = self.host + '/rest/api/latest/result/' + buildDetails + '.json?os_authType=basic&expand=jiraIssues';
 
             this.doApiRequest({ uri: planUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
@@ -402,8 +403,8 @@ var Bamboo = (function () {
                     _iteratorError3 = err;
                 } finally {
                     try {
-                        if (!_iteratorNormalCompletion3 && _iterator3['return']) {
-                            _iterator3['return']();
+                        if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                            _iterator3.return();
                         }
                     } finally {
                         if (_didIteratorError3) {
@@ -441,10 +442,11 @@ var Bamboo = (function () {
          * @param {String} artifactName - Artifact name
          * @param {getArtifactContentCallback} callback
          */
+
     }, {
         key: 'getArtifactContent',
         value: function getArtifactContent(buildDetails, artifactName, callback) {
-            var artifactUri = this.host + '/browse/' + buildDetails + '/artifact/shared/' + artifactName + '/' + artifactName;
+            var artifactUri = this.host + '/browse/' + buildDetails + '/artifact/shared/' + artifactName + '/' + artifactName + '?os_authType=basic';
 
             this.doApiRequest({ uri: artifactUri }, function (error, response, body) {
                 var errors = Bamboo.checkErrors(error, response);
@@ -465,16 +467,17 @@ var Bamboo = (function () {
          * @param {Array=} currentPlans - List of plans available (each plan has a 'key' and a 'name' value)
          * @param {Number|null} startIndex - If given, request with start-index parameter
          */
+
     }, {
         key: 'getAllPlans',
         value: function getAllPlans(params, callback, currentPlans) {
             var startIndex = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
 
             params = params || '';
-            startIndex = startIndex ? '&start-index=' + startIndex : '';
 
-            var self = this,
-                planUri = self.host + '/rest/api/latest/plan.json?' + params + startIndex;
+            var indexParam = startIndex ? '&start-index=' + startIndex : '',
+                self = this,
+                planUri = self.host + '/rest/api/latest/plan.json?os_authType=basic' + params + indexParam;
 
             currentPlans = currentPlans || [];
 
@@ -513,8 +516,8 @@ var Bamboo = (function () {
                     _iteratorError4 = err;
                 } finally {
                     try {
-                        if (!_iteratorNormalCompletion4 && _iterator4['return']) {
-                            _iterator4['return']();
+                        if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                            _iterator4.return();
                         }
                     } finally {
                         if (_didIteratorError4) {
@@ -550,16 +553,17 @@ var Bamboo = (function () {
          * @param {Array=} currentBuilds - List of build already fetched
          * @param {Number|null} startIndex - If given, request with start-index parameter
          */
+
     }, {
         key: 'getAllBuilds',
         value: function getAllBuilds(params, callback, currentBuilds) {
             var startIndex = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
 
             params = params || '';
-            startIndex = startIndex ? '&start-index=' + startIndex : '';
 
-            var self = this,
-                planUri = self.host + '/rest/api/latest/result.json?' + params + startIndex;
+            var indexParam = startIndex ? '&start-index=' + startIndex : '',
+                self = this,
+                planUri = self.host + '/rest/api/latest/result.json?os_authType=basic' + params + indexParam;
 
             currentBuilds = currentBuilds || [];
 
@@ -595,8 +599,8 @@ var Bamboo = (function () {
                     _iteratorError5 = err;
                 } finally {
                     try {
-                        if (!_iteratorNormalCompletion5 && _iterator5['return']) {
-                            _iterator5['return']();
+                        if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                            _iterator5.return();
                         }
                     } finally {
                         if (_didIteratorError5) {
@@ -633,6 +637,7 @@ var Bamboo = (function () {
          * @returns {Error|Boolean} if error, will return Error otherwise false
          * @protected
          */
+
     }], [{
         key: 'checkErrorsWithResult',
         value: function checkErrorsWithResult(error, response) {
@@ -659,6 +664,7 @@ var Bamboo = (function () {
          * @returns {Error|Boolean} if error, will return Error otherwise false
          * @protected
          */
+
     }, {
         key: 'checkErrors',
         value: function checkErrors(error, response) {
@@ -675,8 +681,7 @@ var Bamboo = (function () {
     }]);
 
     return Bamboo;
-})();
+}();
 
-exports['default'] = Bamboo;
-module.exports = exports['default'];
+exports.default = Bamboo;
 //# sourceMappingURL=Bamboo.js.map

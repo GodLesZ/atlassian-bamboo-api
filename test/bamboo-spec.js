@@ -4,16 +4,16 @@ import Bamboo from '../lib/bamboo';
 import expect from 'expect.js';
 import requestMock from 'nock';
 
-let baseTestUrl       = 'http://example.com',
-    testUsername      = 'user',
-    testPassword      = 'pass',
-    authTestUrl       = `http://${testUsername}:${testPassword}@example.com`,
-    testPlanKey       = 'myPrj-myPlan',
-    testApiUrl        = '/rest/api/latest/result',
-    testApiLoginUrl   = '/rest/api/latest/info.json',
-    testPlanResultUrl = testApiUrl + '/' + testPlanKey + '.json',
-    testPlanLatest    = '/rest/api/latest/plan.json',
-    testBuildsLatest  = '/rest/api/latest/result.json';
+let baseTestUrl = 'http://example.com',
+    testUsername = 'user',
+    testPassword = 'pass',
+    authTestUrl = `http://${testUsername}:${testPassword}@example.com`,
+    testPlanKey = 'myPrj-myPlan',
+    testApiUrl = '/rest/api/latest/result',
+    testApiLoginUrl = '/rest/api/latest/plan.json?os_authType=basic',
+    testPlanResultUrl = testApiUrl + '/' + testPlanKey + '.json?os_authType=basic',
+    testPlanLatest = '/rest/api/latest/plan.json?os_authType=basic',
+    testBuildsLatest = '/rest/api/latest/result.json?os_authType=basic';
 
 before(() => {
     requestMock.cleanAll();
@@ -24,12 +24,12 @@ describe('Bamboo', () => {
     describe('requests options matching', () => {
 
         let addRequestMock = () => {
-            let result      = JSON.stringify({
-                    version:     '2.4',
-                    edition:     '',
-                    buildDate:   '2009-09-11T20:47:44.000+0200',
-                    buildNumber: '1503'
-                });
+            let result = JSON.stringify({
+                version: '2.4',
+                edition: '',
+                buildDate: '2009-09-11T20:47:44.000+0200',
+                buildNumber: '1503'
+            });
 
             requestMock(baseTestUrl)
                 .get(testApiLoginUrl)
@@ -41,7 +41,7 @@ describe('Bamboo', () => {
             addRequestMock();
 
             let bamboo = new Bamboo(baseTestUrl);
-            bamboo.doApiRequest({url: bamboo.host+'/rest/api/latest/info.json'}, (error, response, body) => {
+            bamboo.doApiRequest({url: bamboo.host + '/rest/api/latest/plan.json?os_authType=basic'}, (error, response, body) => {
                 let opts = bamboo.defaultRequestOptions;
                 expect(response.request.keepAlive).to.be(opts.keepAlive);
                 expect(response.request.keepAliveMsecs).to.be(opts.keepAliveMsecs);
@@ -54,7 +54,7 @@ describe('Bamboo', () => {
 
         it('returns the latest successful build number', (done) => {
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?1')
+                .get(testPlanResultUrl + '1')
                 .reply(200, JSON.stringify({
                     results: {
                         result: [
@@ -74,7 +74,7 @@ describe('Bamboo', () => {
 
         it('returns a msg when the plan doesn\'t contain any successful build', (done) => {
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?2')
+                .get(testPlanResultUrl + '2')
                 .reply(200, JSON.stringify({
                     results: {
                         result: [
@@ -94,13 +94,13 @@ describe('Bamboo', () => {
 
         it('returns a msg when the plan doesn\'t contain any successful build', (done) => {
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?3')
+                .get(testPlanResultUrl + '3')
                 .reply(200, JSON.stringify({
                     results: {
-                        size:          3,
-                        'max-result':  2,
+                        size: 3,
+                        'max-result': 2,
                         'start-index': 0,
-                        result:        [
+                        result: [
                             {number: '23', state: 'Failed'},
                             {number: '22', state: 'Failed'}
                         ]
@@ -108,13 +108,13 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?3&start-index=2')
+                .get(testPlanResultUrl + '3&start-index=2')
                 .reply(200, JSON.stringify({
                     results: {
-                        size:          3,
-                        'max-result':  1,
+                        size: 3,
+                        'max-result': 1,
                         'start-index': 2,
-                        result:        [
+                        result: [
                             {number: '21', state: 'Failed'}
                         ]
                     }
@@ -130,7 +130,7 @@ describe('Bamboo', () => {
 
         it('returns a msg when the plan doesn\'t contain any result', (done) => {
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?4')
+                .get(testPlanResultUrl + '4')
                 .reply(200, JSON.stringify({
                     results: {
                         result: []
@@ -148,7 +148,7 @@ describe('Bamboo', () => {
 
         it('returns a msg when the plan doesn\'t exist', (done) => {
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?5')
+                .get(testPlanResultUrl + '5')
                 .reply(404);
 
             let bamboo = new Bamboo(baseTestUrl);
@@ -161,13 +161,13 @@ describe('Bamboo', () => {
 
         it('returns the latest successful build number in multiple \'requests\'', (done) => {
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?6')
+                .get(testPlanResultUrl + '6')
                 .reply(200, JSON.stringify({
                     results: {
-                        size:          3,
-                        'max-result':  2,
+                        size: 3,
+                        'max-result': 2,
                         'start-index': 0,
-                        result:        [
+                        result: [
                             {number: '23', state: 'Failed'},
                             {number: '22', state: 'Failed'}
                         ]
@@ -175,13 +175,13 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?6&start-index=2')
+                .get(testPlanResultUrl + '6&start-index=2')
                 .reply(200, JSON.stringify({
                     results: {
-                        size:          3,
-                        'max-result':  1,
+                        size: 3,
+                        'max-result': 1,
                         'start-index': 2,
-                        result:        [
+                        result: [
                             {number: '21', state: 'Successful'}
                         ]
                     }
@@ -206,7 +206,7 @@ describe('Bamboo', () => {
                 buildNumber: 1337
             };
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/' + testPlanKey + '-416.json?')
+                .get(testApiUrl + '/' + testPlanKey + '-416.json?os_authType=basic&')
                 .reply(200, JSON.stringify(responseBuild));
 
             let bamboo = new Bamboo(baseTestUrl);
@@ -249,10 +249,10 @@ describe('Bamboo', () => {
                 .get(testPlanResultUrl)
                 .reply(200, JSON.stringify({
                     results: {
-                        size:          3,
-                        'max-result':  1,
+                        size: 3,
+                        'max-result': 1,
                         'start-index': 0,
-                        result:        []
+                        result: []
                     }
                 }));
 
@@ -270,13 +270,13 @@ describe('Bamboo', () => {
 
         let addRequestMock = (numStart, numResults, data = [], size = 0, params = '') => {
             requestMock(baseTestUrl)
-                .get(testPlanLatest + '?' + params + (numStart > 0 ? '&start-index=' + numStart : ''))
+                .get(testPlanLatest + '' + params + (numStart > 0 ? '&start-index=' + numStart : ''))
                 .reply(200, JSON.stringify({
                     plans: {
-                        size:          size,
-                        'max-result':  numResults,
+                        size: size,
+                        'max-result': numResults,
                         'start-index': numStart,
-                        plan:          data
+                        plan: data
                     }
                 }));
         };
@@ -343,13 +343,13 @@ describe('Bamboo', () => {
 
         let addRequestMock = (numStart, numResults, data = [], size = 0, params = '') => {
             requestMock(baseTestUrl)
-                .get(testBuildsLatest + '?' + params + (numStart > 0 ? '&start-index=' + numStart : ''))
+                .get(testBuildsLatest + '' + params + (numStart > 0 ? '&start-index=' + numStart : ''))
                 .reply(200, JSON.stringify({
                     results: {
-                        size:          size,
-                        'max-result':  numResults,
+                        size: size,
+                        'max-result': numResults,
                         'start-index': numStart,
-                        result:        data
+                        result: data
                     }
                 }));
         };
@@ -417,7 +417,7 @@ describe('Bamboo', () => {
         it('returns the latest successful build number', (done) => {
 
             requestMock(baseTestUrl)
-                .get('/browse/myPrj-myPlan-234/artifact/shared/name1/name1')
+                .get('/browse/myPrj-myPlan-234/artifact/shared/name1/name1?os_authType=basic')
                 .reply(200, 'AAA');
 
             let bamboo = new Bamboo(baseTestUrl);
@@ -435,10 +435,10 @@ describe('Bamboo', () => {
         it('returns the list of JIRA task from a build - no dependent plan', (done) => {
 
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/plan1-234.json?expand=jiraIssues')
+                .get(testApiUrl + '/plan1-234.json?os_authType=basic&expand=jiraIssues')
                 .reply(200, JSON.stringify({
                     buildReason: '',
-                    jiraIssues:  {
+                    jiraIssues: {
                         issue: [
                             {key: 'AAA'},
                             {key: 'AAA'},
@@ -458,10 +458,10 @@ describe('Bamboo', () => {
         it('returns the list of JIRA task from a build - dependent on planB', (done) => {
 
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/plan1-234.json?expand=jiraIssues')
+                .get(testApiUrl + '/plan1-234.json?os_authType=basic&expand=jiraIssues')
                 .reply(200, JSON.stringify({
                     buildReason: 'Child of <a>plan2-99</a>',
-                    jiraIssues:  {
+                    jiraIssues: {
                         issue: [
                             {key: 'AAA'},
                             {key: 'AAA'},
@@ -471,10 +471,10 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/plan2-99.json?expand=jiraIssues')
+                .get(testApiUrl + '/plan2-99.json?os_authType=basic&expand=jiraIssues')
                 .reply(200, JSON.stringify({
                     buildReason: 'Child of <a>plan3-11</a>',
-                    jiraIssues:  {
+                    jiraIssues: {
                         issue: [
                             {key: 'CCC'},
                             {key: 'BBB'}
@@ -483,10 +483,10 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/plan3-11.json?expand=jiraIssues')
+                .get(testApiUrl + '/plan3-11.json?os_authType=basic&expand=jiraIssues')
                 .reply(200, JSON.stringify({
                     buildReason: 'Changes by <a>XX</a>',
-                    jiraIssues:  {
+                    jiraIssues: {
                         issue: [
                             {key: 'DDD'},
                             {key: 'EEE'}
@@ -508,7 +508,7 @@ describe('Bamboo', () => {
         it('returns the list of changes from a build - no dependent plan', (done) => {
 
             requestMock(baseTestUrl)
-                .get(testPlanResultUrl + '?expand=changes')
+                .get(testPlanResultUrl + '&expand=changes')
                 .reply(200, JSON.stringify({
                     changes: {
                         change: [
@@ -530,10 +530,10 @@ describe('Bamboo', () => {
         it('returns the list of JIRA task from a build - dependent on planB', (done) => {
 
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/plan1-234.json?expand=changes')
+                .get(testApiUrl + '/plan1-234.json?os_authType=basic&expand=changes')
                 .reply(200, JSON.stringify({
                     buildReason: 'Child of <a>plan2-99</a>',
-                    changes:     {
+                    changes: {
                         change: [
                             {fullName: 'a b'},
                             {fullName: 'a b'},
@@ -543,10 +543,10 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/plan2-99.json?expand=changes')
+                .get(testApiUrl + '/plan2-99.json?os_authType=basic&expand=changes')
                 .reply(200, JSON.stringify({
                     buildReason: 'Child of <a>plan3-11</a>',
-                    changes:     {
+                    changes: {
                         change: [
                             {fullName: 'e f'},
                             {fullName: 'g h'}
@@ -555,10 +555,10 @@ describe('Bamboo', () => {
                 }));
 
             requestMock(baseTestUrl)
-                .get(testApiUrl + '/plan3-11.json?expand=changes')
+                .get(testApiUrl + '/plan3-11.json?os_authType=basic&expand=changes')
                 .reply(200, JSON.stringify({
                     buildReason: 'Changes by <a>XX</a>',
-                    changes:     {
+                    changes: {
                         change: [
                             {fullName: 'i j'},
                             {fullName: 'i j'},
@@ -579,15 +579,19 @@ describe('Bamboo', () => {
     describe('testLogin', () => {
 
         let addRequestMock = () => {
-            let authString  = testUsername + ':' + testPassword,
-                encrypted   = (new Buffer(authString)).toString('base64'),
-                result      = JSON.stringify({
-                    version:     '2.4',
-                    edition:     '',
-                    buildDate:   '2009-09-11T20:47:44.000+0200',
-                    buildNumber: '1503'
+            let authString = testUsername + ':' + testPassword,
+                encrypted = (new Buffer(authString)).toString('base64'),
+                result = JSON.stringify({
+                    expand: 'plans',
+                    link: {
+                        href: 'http://example.com',
+                        rel: 'self'
+                    },
+                    plans: {}
                 }),
-                headerMatch = (val) => { return val === 'Basic ' + encrypted; };
+                headerMatch = (val) => {
+                    return val === 'Basic ' + encrypted;
+                };
 
             requestMock(baseTestUrl)
                 .get(testApiLoginUrl)

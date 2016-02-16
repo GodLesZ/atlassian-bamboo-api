@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = function (wallaby) {
     return {
         files: [
             'lib/*.js'
@@ -13,7 +13,7 @@ module.exports = function () {
         },
 
         preprocessors: {
-            '**/*.js': file => require('babel').transform(file.content, {sourceMap: true})
+            '**/*.js': file => require('babel-core').transform(file.content, {sourceMap: true})
         }
     };
 };
